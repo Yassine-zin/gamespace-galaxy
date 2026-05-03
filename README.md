@@ -1,16 +1,15 @@
-# GameSpace Galaxy 🚀
+# 🚀 GameSpace Galaxy
 
-A modular Web3 gaming platform for the Pi ecosystem.
+Web3 gaming platform built for the Pi ecosystem.
 
-## Live App
-
-https://gamespace-galaxy-app.vercel.app
+## 🌐 Live App
+https://gamespace-galaxy.vercel.app
 
 ## Features
+- Pi Login
+- Rewards
+- Wallet Ready
+- Modular Gaming System
 
-- Pi Login Ready
-- Rewards System
-- Wallet Integration
-- Multi-game Future Expansion
-
-Founder: Yassine Zouine
+## Founder
+Yassine Zouine
