@@ -1,62 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>GameSpace Galaxy</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GameSpace Galaxy</title>
 
-  <!-- Pi SDK -->
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<!-- Pi SDK -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      padding: 30px;
-    }
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background: radial-gradient(circle, #0f172a, #020617);
+  color:white;
+  text-align:center;
+  padding:40px;
+}
 
-    button {
-      padding: 12px 18px;
-      margin: 10px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
+h1 {
+  color:#38bdf8;
+  font-size:40px;
+  margin-bottom:10px;
+}
 
-    .login { background: #3b82f6; color: white; }
-    .pay { background: #22c55e; color: white; }
-  </style>
+p {
+  opacity:0.8;
+  margin-bottom:30px;
+}
+
+.card {
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+  max-width:400px;
+  margin:auto;
+}
+
+button {
+  padding:14px 20px;
+  margin:10px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+.login {
+  background:#3b82f6;
+  color:white;
+}
+
+.pay {
+  background:#22c55e;
+  color:white;
+}
+
+button:hover {
+  transform:scale(1.05);
+}
+
+.status {
+  margin-top:15px;
+  font-size:14px;
+  opacity:0.8;
+}
+
+.badge {
+  display:inline-block;
+  padding:5px 10px;
+  background:#0ea5e9;
+  border-radius:20px;
+  font-size:12px;
+  margin-bottom:15px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>🎮 GameSpace Galaxy</h2>
+<div class="badge">🚀 Web3 Gaming Platform</div>
 
-<button class="login" onclick="login()">Login with Pi</button>
+<h1>GameSpace Galaxy</h1>
+<p>Play • Earn • Explore the Pi-powered universe</p>
+
+<div class="card">
+
+<button class="login" onclick="login()">🔐 Login with Pi</button>
+
 <br/>
 
-<button class="pay" onclick="pay()">Pay 0.001 π</button>
+<button class="pay" onclick="pay()">💰 Test Payment (0.001 π)</button>
+
+<div class="status" id="status">Not logged in</div>
+
+</div>
 
 <script>
+
 let user = null;
 
+// Init Pi
 window.onload = function () {
   Pi.init({ version: "2.0", sandbox: true });
 };
 
+// LOGIN
 async function login() {
   try {
-    const scopes = ['payments'];
+    const scopes = ['username', 'payments'];
+
     user = await Pi.authenticate(scopes);
-    alert("✅ Logged in: " + user.user.username);
+
+    document.getElementById("status").innerText =
+      "Logged in as: " + user.user.username;
+
+    localStorage.setItem("pi_user", JSON.stringify(user));
+
   } catch (e) {
     console.log(e);
-    alert("❌ Login failed");
+    alert("Login failed");
   }
 }
 
+// PAYMENT
 function pay() {
   if (!user) {
-    alert("❌ خاصك Login الأول");
+    alert("❌ Login first");
     return;
   }
 
@@ -82,14 +153,15 @@ function pay() {
           body: JSON.stringify({ paymentId, txid })
         });
 
-        alert("🎉 Payment Successful");
+        alert("🎉 Payment Successful!");
       },
 
-      onCancel: () => alert("Cancelled"),
+      onCancel: () => alert("Payment cancelled"),
       onError: (e) => alert("Error: " + e)
     }
   );
 }
+
 </script>
 
 </body>
