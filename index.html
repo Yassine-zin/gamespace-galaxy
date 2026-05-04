@@ -1,167 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GameSpace Galaxy</title>
-
-<!-- Pi SDK -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GameSpace Galaxy V3</title>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family: Arial;
-  background: radial-gradient(circle, #0f172a, #020617);
-  color:white;
-  text-align:center;
-  padding:40px;
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#020617,#0f172a,#111827);
+color:white;
+text-align:center;
+padding:20px;
 }
 
-h1 {
-  color:#38bdf8;
-  font-size:40px;
-  margin-bottom:10px;
+.box{
+max-width:430px;
+margin:auto;
+background:#111827;
+padding:25px;
+border-radius:20px;
+box-shadow:0 0 30px rgba(56,189,248,.2);
 }
 
-p {
-  opacity:0.8;
-  margin-bottom:30px;
+h1{color:#38bdf8;}
+button{
+width:100%;
+padding:14px;
+margin-top:12px;
+border:none;
+border-radius:12px;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
 }
 
-.card {
-  background:#1e293b;
-  padding:20px;
-  border-radius:15px;
-  max-width:400px;
-  margin:auto;
+.login{background:#3b82f6;color:white;}
+.reward{background:#22c55e;color:white;}
+.mission{background:#f59e0b;color:white;}
+.pay{background:#8b5cf6;color:white;}
+
+.card{
+margin-top:14px;
+padding:14px;
+background:#0f172a;
+border-radius:12px;
 }
 
-button {
-  padding:14px 20px;
-  margin:10px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-  transition:0.2s;
-}
-
-.login {
-  background:#3b82f6;
-  color:white;
-}
-
-.pay {
-  background:#22c55e;
-  color:white;
-}
-
-button:hover {
-  transform:scale(1.05);
-}
-
-.status {
-  margin-top:15px;
-  font-size:14px;
-  opacity:0.8;
-}
-
-.badge {
-  display:inline-block;
-  padding:5px 10px;
-  background:#0ea5e9;
-  border-radius:20px;
-  font-size:12px;
-  margin-bottom:15px;
-}
+.small{font-size:13px;opacity:.8;}
 </style>
 </head>
 
 <body>
 
-<div class="badge">🚀 Web3 Gaming Platform</div>
+<div class="box">
 
-<h1>GameSpace Galaxy</h1>
-<p>Play • Earn • Explore the Pi-powered universe</p>
-
-<div class="card">
+<h1>🚀 GameSpace Galaxy</h1>
+<p>Play • Earn • Rule the Pi Universe</p>
 
 <button class="login" onclick="login()">🔐 Login with Pi</button>
 
-<br/>
+<div class="card">
+<p id="user">Guest Mode</p>
+<p>🏆 Rank: <span id="rank">Rookie</span></p>
+<p>⭐ XP: <span id="xp">0</span></p>
+<p>🪙 Reward: <span id="reward">0</span> π</p>
+</div>
 
-<button class="pay" onclick="pay()">💰 Test Payment (0.001 π)</button>
-
-<div class="status" id="status">Not logged in</div>
+<button class="reward" onclick="claim()">🎁 Claim Daily Reward</button>
+<button class="mission" onclick="mission()">⚔️ Start Mission</button>
+<button class="pay" onclick="premium()">💎 Unlock Premium</button>
 
 </div>
 
 <script>
+let user=null;
+let xp=0;
+let reward=0;
 
-let user = null;
-
-// Init Pi
-window.onload = function () {
-  Pi.init({ version: "2.0", sandbox: true });
-};
-
-// LOGIN
-async function login() {
-  try {
-    const scopes = ['username', 'payments'];
-
-    user = await Pi.authenticate(scopes);
-
-    document.getElementById("status").innerText =
-      "Logged in as: " + user.user.username;
-
-    localStorage.setItem("pi_user", JSON.stringify(user));
-
-  } catch (e) {
-    console.log(e);
-    alert("Login failed");
-  }
+window.onload=()=>{
+Pi.init({version:"2.0",sandbox:true});
 }
 
-// PAYMENT
-function pay() {
-  if (!user) {
-    alert("❌ Login first");
-    return;
-  }
-
-  Pi.createPayment(
-    {
-      amount: 0.001,
-      memo: "GameSpace Galaxy Test Payment",
-      metadata: { app: "GameSpace Galaxy" }
-    },
-    {
-      onReadyForServerApproval: function(paymentId) {
-        fetch("/api/approve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentId })
-        });
-      },
-
-      onReadyForServerCompletion: function(paymentId, txid) {
-        fetch("/api/complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentId, txid })
-        });
-
-        alert("🎉 Payment Successful!");
-      },
-
-      onCancel: () => alert("Payment cancelled"),
-      onError: (e) => alert("Error: " + e)
-    }
-  );
+async function login(){
+try{
+user=await Pi.authenticate(['username','payments']);
+document.getElementById("user").innerText="Commander "+user.user.username;
+}catch(e){
+alert("Login failed");
+}
 }
 
+function updateRank(){
+let rank="Rookie";
+if(xp>=50) rank="Warrior";
+if(xp>=100) rank="Elite";
+if(xp>=200) rank="Legend";
+document.getElementById("rank").innerText=rank;
+}
+
+function claim(){
+if(!user){alert("Login first");return;}
+reward+=0.01;
+xp+=10;
+document.getElementById("reward").innerText=reward.toFixed(2);
+document.getElementById("xp").innerText=xp;
+updateRank();
+alert("🎁 Reward Claimed!");
+}
+
+function mission(){
+if(!user){alert("Login first");return;}
+xp+=25;
+document.getElementById("xp").innerText=xp;
+updateRank();
+alert("⚔️ Mission Complete +25 XP");
+}
+
+function premium(){
+if(!user){alert("Login first");return;}
+
+Pi.createPayment(
+{
+amount:0.001,
+memo:"Premium Unlock",
+metadata:{app:"GameSpace Galaxy"}
+},
+{
+onReadyForServerApproval:function(paymentId){
+fetch("/api/approve",{method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({paymentId})});
+},
+
+onReadyForServerCompletion:function(paymentId,txid){
+fetch("/api/complete",{method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({paymentId,txid})});
+
+alert("💎 Premium Activated!");
+},
+
+onCancel:function(){alert("Cancelled");},
+onError:function(e){alert("Error");}
+}
+);
+}
 </script>
 
 </body>
