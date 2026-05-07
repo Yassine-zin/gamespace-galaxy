@@ -3,150 +3,279 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>GameSpace Galaxy V3</title>
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<title>GameSpace Galaxy</title>
 
 <style>
-body{
+*{
 margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#020617,#0f172a,#111827);
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0b0b25,#1a0938,#090914);
+min-height:100vh;
 color:white;
-text-align:center;
+overflow-x:hidden;
 padding:20px;
 }
 
-.box{
+/* Stars */
+body::before{
+content:"";
+position:fixed;
+width:200%;
+height:200%;
+background-image:
+radial-gradient(white 1px, transparent 1px),
+radial-gradient(#7c3aed 1px, transparent 1px),
+radial-gradient(#06b6d4 1px, transparent 1px);
+background-size:60px 60px,80px 80px,100px 100px;
+animation:moveStars 35s linear infinite;
+opacity:0.25;
+z-index:-1;
+}
+
+@keyframes moveStars{
+from{transform:translate(0,0);}
+to{transform:translate(-300px,-300px);}
+}
+
+.container{
 max-width:430px;
 margin:auto;
-background:#111827;
-padding:25px;
-border-radius:20px;
-box-shadow:0 0 30px rgba(56,189,248,.2);
 }
 
-h1{color:#38bdf8;}
-button{
-width:100%;
-padding:14px;
-margin-top:12px;
-border:none;
-border-radius:12px;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
+.header{
+text-align:center;
+margin-top:20px;
+margin-bottom:25px;
 }
 
-.login{background:#3b82f6;color:white;}
-.reward{background:#22c55e;color:white;}
-.mission{background:#f59e0b;color:white;}
-.pay{background:#8b5cf6;color:white;}
+.header h1{
+font-size:34px;
+background:linear-gradient(90deg,#60a5fa,#c084fc,#22d3ee);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:900;
+}
+
+.header p{
+color:#d1d5db;
+margin-top:8px;
+font-size:15px;
+}
 
 .card{
-margin-top:14px;
-padding:14px;
-background:#0f172a;
-border-radius:12px;
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,255,255,0.12);
+backdrop-filter:blur(14px);
+border-radius:22px;
+padding:20px;
+margin-bottom:18px;
+box-shadow:0 0 20px rgba(0,0,0,0.25);
 }
 
-.small{font-size:13px;opacity:.8;}
+.user{
+text-align:center;
+}
+
+.avatar{
+width:74px;
+height:74px;
+border-radius:50%;
+background:linear-gradient(135deg,#7c3aed,#06b6d4);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:30px;
+margin:auto;
+margin-bottom:12px;
+box-shadow:0 0 20px rgba(124,58,237,.6);
+}
+
+.user h2{
+font-size:22px;
+margin-bottom:6px;
+}
+
+.user p{
+color:#d1d5db;
+font-size:14px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+margin-top:15px;
+}
+
+.stat{
+background:rgba(255,255,255,0.06);
+padding:14px;
+border-radius:16px;
+text-align:center;
+}
+
+.stat span{
+display:block;
+font-size:13px;
+color:#cbd5e1;
+margin-bottom:6px;
+}
+
+.stat strong{
+font-size:20px;
+}
+
+.buttons{
+display:flex;
+flex-direction:column;
+gap:14px;
+margin-top:10px;
+}
+
+button{
+border:none;
+padding:16px;
+border-radius:16px;
+font-size:16px;
+font-weight:700;
+cursor:pointer;
+transition:0.3s;
+color:white;
+}
+
+button:hover{
+transform:translateY(-2px) scale(1.02);
+}
+
+.reward{
+background:linear-gradient(90deg,#22c55e,#16a34a);
+box-shadow:0 0 16px rgba(34,197,94,.45);
+}
+
+.mission{
+background:linear-gradient(90deg,#3b82f6,#2563eb);
+box-shadow:0 0 16px rgba(59,130,246,.45);
+}
+
+.premium{
+background:linear-gradient(90deg,#a855f7,#7c3aed);
+box-shadow:0 0 16px rgba(168,85,247,.45);
+}
+
+.footer{
+text-align:center;
+margin-top:22px;
+font-size:13px;
+color:#94a3b8;
+}
+
+.notice{
+margin-top:15px;
+background:rgba(34,197,94,.12);
+padding:12px;
+border-radius:14px;
+text-align:center;
+font-size:14px;
+display:none;
+}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
 
-<h1>🚀 GameSpace Galaxy</h1>
+<div class="header">
+<h1>GameSpace Galaxy</h1>
 <p>Play • Earn • Rule the Pi Universe</p>
-
-<button class="login" onclick="login()">🔐 Login with Pi</button>
-
-<div class="card">
-<p id="user">Guest Mode</p>
-<p>🏆 Rank: <span id="rank">Rookie</span></p>
-<p>⭐ XP: <span id="xp">0</span></p>
-<p>🪙 Reward: <span id="reward">0</span> π</p>
 </div>
 
-<button class="reward" onclick="claim()">🎁 Claim Daily Reward</button>
-<button class="mission" onclick="mission()">⚔️ Start Mission</button>
-<button class="pay" onclick="premium()">💎 Unlock Premium</button>
+<div class="card user">
+<div class="avatar">🚀</div>
+<h2>Commander Yassine</h2>
+<p>Galaxy Pioneer</p>
+
+<div class="stats">
+<div class="stat">
+<span>🏆 Rank</span>
+<strong>Rookie</strong>
+</div>
+
+<div class="stat">
+<span>⭐ XP</span>
+<strong id="xp">0</strong>
+</div>
+
+<div class="stat">
+<span>🪙 Reward</span>
+<strong id="reward">0 π</strong>
+</div>
+
+<div class="stat">
+<span>👥 Players</span>
+<strong>2,450</strong>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="buttons">
+
+<button class="reward" onclick="claimReward()">
+🎁 Claim Daily Reward
+</button>
+
+<button class="mission" onclick="startMission()">
+⚔️ Start Mission
+</button>
+
+<button class="premium" onclick="premium()">
+💎 Premium Access
+</button>
+
+</div>
+
+<div class="notice" id="notice"></div>
+</div>
+
+<div class="footer">
+Powered by Pi Network • GameSpace Galaxy © 2026
+</div>
 
 </div>
 
 <script>
-let user=null;
-let xp=0;
-let reward=0;
+let xp = 0;
+let reward = 0;
 
-window.onload=()=>{
-Pi.init({version:"2.0",sandbox:true});
+function showMessage(msg){
+let box = document.getElementById("notice");
+box.innerText = msg;
+box.style.display = "block";
+setTimeout(()=>{box.style.display="none";},2500);
 }
 
-async function login(){
-try{
-user=await Pi.authenticate(['username','payments']);
-document.getElementById("user").innerText="Commander "+user.user.username;
-}catch(e){
-alert("Login failed");
-}
-}
-
-function updateRank(){
-let rank="Rookie";
-if(xp>=50) rank="Warrior";
-if(xp>=100) rank="Elite";
-if(xp>=200) rank="Legend";
-document.getElementById("rank").innerText=rank;
+function claimReward(){
+reward += 0.01;
+xp += 5;
+document.getElementById("reward").innerText = reward.toFixed(2)+" π";
+document.getElementById("xp").innerText = xp;
+showMessage("🎉 Daily Reward Claimed!");
 }
 
-function claim(){
-if(!user){alert("Login first");return;}
-reward+=0.01;
-xp+=10;
-document.getElementById("reward").innerText=reward.toFixed(2);
-document.getElementById("xp").innerText=xp;
-updateRank();
-alert("🎁 Reward Claimed!");
-}
-
-function mission(){
-if(!user){alert("Login first");return;}
-xp+=25;
-document.getElementById("xp").innerText=xp;
-updateRank();
-alert("⚔️ Mission Complete +25 XP");
+function startMission(){
+xp += 10;
+document.getElementById("xp").innerText = xp;
+showMessage("⚔️ Mission Started! +10 XP");
 }
 
 function premium(){
-if(!user){alert("Login first");return;}
-
-Pi.createPayment(
-{
-amount:0.001,
-memo:"Premium Unlock",
-metadata:{app:"GameSpace Galaxy"}
-},
-{
-onReadyForServerApproval:function(paymentId){
-fetch("/api/approve",{method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({paymentId})});
-},
-
-onReadyForServerCompletion:function(paymentId,txid){
-fetch("/api/complete",{method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({paymentId,txid})});
-
-alert("💎 Premium Activated!");
-},
-
-onCancel:function(){alert("Cancelled");},
-onError:function(e){alert("Error");}
-}
-);
+showMessage("💎 Premium Coming Soon!");
 }
 </script>
 
