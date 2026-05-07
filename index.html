@@ -7,80 +7,43 @@
 
 <style>
 body{
-  margin:0;
-  padding:0;
-  background:#050816;
-  color:white;
-  font-family:Arial, sans-serif;
-  text-align:center;
+background:#070b1a;
+color:white;
+font-family:Arial;
+text-align:center;
+padding:30px;
 }
-
-.wrap{
-  padding:40px 20px;
+.box{
+max-width:420px;
+margin:auto;
+background:#11182c;
+padding:25px;
+border-radius:18px;
 }
-
-.logo{
-  font-size:42px;
-  margin-top:30px;
-}
-
-h1{
-  margin:10px 0;
-  font-size:32px;
-}
-
-p{
-  opacity:.8;
-}
-
-.card{
-  background:#11182c;
-  margin:25px auto;
-  padding:20px;
-  border-radius:18px;
-  max-width:420px;
-}
-
 button{
-  background:#6c5ce7;
-  color:white;
-  border:none;
-  padding:14px 22px;
-  border-radius:12px;
-  font-size:16px;
-  margin-top:12px;
-  cursor:pointer;
+padding:14px 22px;
+font-size:16px;
+border:none;
+border-radius:12px;
+background:#6c5ce7;
+color:white;
+cursor:pointer;
+margin-top:15px;
+width:100%;
 }
-
-button:active{
-  transform:scale(.98);
+button:disabled{
+opacity:.6;
 }
-
-.small{
-  font-size:13px;
-  opacity:.7;
-  margin-top:12px;
-}
-
-.success{
-  color:#00e676;
-}
-
-.error{
-  color:#ff5252;
-}
+.small{font-size:13px;opacity:.7;margin-top:10px;}
+.ok{color:#00e676;}
+.err{color:#ff5252;}
 </style>
 </head>
 
 <body>
-<div class="wrap">
-  <div class="logo">🌌</div>
-  <h1>GameSpace Galaxy</h1>
-  <p>Pi Web3 Gaming Platform</p>
 
-  <div class="card" id="app">
-    Loading...
-  </div>
+<div class="box" id="app">
+Loading...
 </div>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
@@ -88,149 +51,138 @@ button:active{
 <script>
 const app = document.getElementById("app");
 
-// ========================
-// PI INIT
-// ========================
 Pi.init({
-  version: "2.0",
-  sandbox: false
+  version:"2.0",
+  sandbox:false
 });
 
-// ========================
-// PAYMENT CALLBACK
-// ========================
-function onIncompletePaymentFound(payment) {
-  console.log("Incomplete Payment:", payment);
+function onIncompletePaymentFound(payment){
+  console.log(payment);
 }
 
-// ========================
-// SAVE USER
-// ========================
-function saveUser(data){
-  localStorage.setItem("pi_user", JSON.stringify(data));
+function saveUser(u){
+ localStorage.setItem("pi_user", JSON.stringify(u));
 }
 
 function getUser(){
-  try{
-    return JSON.parse(localStorage.getItem("pi_user"));
-  }catch(e){
-    return null;
-  }
+ try{
+   return JSON.parse(localStorage.getItem("pi_user"));
+ }catch(e){
+   return null;
+ }
 }
 
-// ========================
-// LOGIN
-// ========================
-async function loginPi(){
+async function login(){
 
-  app.innerHTML = `
-    <h2>Connecting to Pi...</h2>
-    <p class="small">Please wait</p>
-  `;
+ try{
 
-  try{
+ const auth = await Pi.authenticate(
+   ["username"],
+   onIncompletePaymentFound
+ );
 
-    const auth = await Pi.authenticate(
-      ["username"],
-      onIncompletePaymentFound
-    );
+ saveUser(auth);
 
-    saveUser(auth);
+ render(auth);
 
-    app.innerHTML = `
-      <h2 class="success">Welcome ${auth.user.username} 🚀</h2>
-      <p>Galaxy access granted</p>
+ }catch(e){
 
-      <button onclick="buyBoost()">
-        Buy Boost (1 Pi)
-      </button>
+ app.innerHTML = `
+ <h2 class="err">Login Failed ❌</h2>
+ <button onclick="login()">Retry</button>
+ `;
 
-      <div class="small">
-        UID: ${auth.user.uid}
-      </div>
-    `;
+ }
 
-  }catch(err){
-
-    console.log(err);
-
-    app.innerHTML = `
-      <h2 class="error">Login Failed ❌</h2>
-      <p class="small">Try opening from Pi Browser</p>
-
-      <button onclick="loginPi()">
-        Retry Login
-      </button>
-    `;
-  }
 }
 
-// ========================
-// PAYMENT
-// ========================
+function render(user){
+
+ app.innerHTML = `
+ <h2 class="ok">Welcome ${user.user.username} 🚀</h2>
+ <p>Galaxy access granted</p>
+
+ <button id="payBtn" onclick="buyBoost()">
+ Buy Boost (1 Pi)
+ </button>
+
+ <div class="small">
+ UID: ${user.user.uid}
+ </div>
+
+ <div class="small" id="status"></div>
+ `;
+
+}
+
 function buyBoost(){
 
-  const user = getUser();
+ const btn = document.getElementById("payBtn");
+ const status = document.getElementById("status");
 
-  if(!user){
-    loginPi();
-    return;
-  }
+ btn.disabled = true;
+ btn.innerText = "Processing...";
+ status.innerText = "Opening Pi Payment...";
 
-  Pi.createPayment({
-    amount: 1,
-    memo: "Galaxy Boost",
-    metadata: { item:"boost" }
+ try{
 
-  },{
+ Pi.createPayment({
+   amount:1,
+   memo:"Galaxy Boost",
+   metadata:{ item:"boost" }
 
-    onReadyForServerApproval: function(paymentId){
-      console.log("Approve:", paymentId);
-    },
+ },{
 
-    onReadyForServerCompletion: function(paymentId, txid){
-      console.log("Complete:", paymentId, txid);
-    },
+   onReadyForServerApproval:function(paymentId){
+     status.innerText = "Waiting approval...";
+     console.log(paymentId);
+   },
 
-    onCancel: function(paymentId){
-      alert("Payment cancelled");
-    },
+   onReadyForServerCompletion:function(paymentId,txid){
+     status.innerText = "Completing payment...";
+   },
 
-    onError: function(error, payment){
-      console.log(error);
-      alert("Payment error");
-    },
+   onCancel:function(paymentId){
+     status.innerText = "Payment cancelled";
+     btn.disabled = false;
+     btn.innerText = "Buy Boost (1 Pi)";
+   },
 
-    onComplete: function(payment, txid){
-      alert("Boost Activated 🚀");
-    }
+   onError:function(error,payment){
+     console.log(error);
+     status.innerText = "Payment error ❌";
+     btn.disabled = false;
+     btn.innerText = "Buy Boost (1 Pi)";
+   },
 
-  });
+   onComplete:function(payment,txid){
+     status.innerText = "Boost Activated 🚀";
+     btn.innerText = "Purchased ✅";
+   }
+
+ });
+
+ }catch(err){
+
+ status.innerText = "Cannot open payment";
+ btn.disabled = false;
+ btn.innerText = "Buy Boost (1 Pi)";
+
+ }
+
 }
 
-// ========================
-// AUTO START
-// ========================
 window.onload = function(){
 
-  const user = getUser();
+ const user = getUser();
 
-  if(user && user.user){
-    app.innerHTML = `
-      <h2 class="success">Welcome Back ${user.user.username} 🚀</h2>
+ if(user){
+   render(user);
+ }else{
+   login();
+ }
 
-      <button onclick="buyBoost()">
-        Buy Boost (1 Pi)
-      </button>
-
-      <div class="small">
-        Saved Session
-      </div>
-    `;
-  }else{
-    loginPi();
-  }
-};
+}
 </script>
 
 </body>
