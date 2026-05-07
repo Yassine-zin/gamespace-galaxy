@@ -1,187 +1,122 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GameSpace Galaxy</title>
+
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <style>
 body{
-background:#070b1a;
-color:white;
+margin:0;
 font-family:Arial;
+background:#0f172a;
+color:white;
 text-align:center;
-padding:30px;
+padding:20px;
 }
-.box{
+.card{
 max-width:420px;
 margin:auto;
-background:#11182c;
+background:#1e293b;
 padding:25px;
-border-radius:18px;
+border-radius:20px;
+box-shadow:0 0 20px rgba(0,0,0,.4);
 }
+h1{font-size:32px;margin-bottom:5px;}
+p{color:#cbd5e1;}
 button{
-padding:14px 22px;
-font-size:16px;
+width:100%;
+padding:15px;
+margin-top:12px;
 border:none;
-border-radius:12px;
-background:#6c5ce7;
+border-radius:14px;
+font-size:16px;
+font-weight:bold;
 color:white;
 cursor:pointer;
+}
+.login{background:#2563eb;}
+.reward{background:#16a34a;}
+.premium{background:#9333ea;}
+.notice{
 margin-top:15px;
-width:100%;
+padding:12px;
+border-radius:12px;
+background:#334155;
 }
-button:disabled{
-opacity:.6;
-}
-.small{font-size:13px;opacity:.7;margin-top:10px;}
-.ok{color:#00e676;}
-.err{color:#ff5252;}
 </style>
 </head>
 
 <body>
 
-<div class="box" id="app">
-Loading...
+<div class="card">
+
+<h1>🚀 GameSpace Galaxy</h1>
+<p>Play • Earn • Rule the Pi Universe</p>
+
+<button class="login" onclick="login()">🔐 Login with Pi</button>
+<button class="reward" onclick="reward()">🎁 Claim Reward</button>
+<button class="premium" onclick="premium()">💎 Premium Access</button>
+
+<div class="notice" id="msg">Ready</div>
+
 </div>
 
-<script src="https://sdk.minepi.com/pi-sdk.js"></script>
-
 <script>
-const app = document.getElementById("app");
+let currentUser=null;
 
-Pi.init({
-  version:"2.0",
-  sandbox:false
-});
-
-function onIncompletePaymentFound(payment){
-  console.log(payment);
-}
-
-function saveUser(u){
- localStorage.setItem("pi_user", JSON.stringify(u));
-}
-
-function getUser(){
- try{
-   return JSON.parse(localStorage.getItem("pi_user"));
- }catch(e){
-   return null;
- }
+function show(t){
+document.getElementById("msg").innerText=t;
 }
 
 async function login(){
-
- try{
-
- const auth = await Pi.authenticate(
-   ["username"],
-   onIncompletePaymentFound
- );
-
- saveUser(auth);
-
- render(auth);
-
- }catch(e){
-
- app.innerHTML = `
- <h2 class="err">Login Failed ❌</h2>
- <button onclick="login()">Retry</button>
- `;
-
- }
-
+try{
+Pi.init({version:"2.0",sandbox:true});
+const auth = await Pi.authenticate(['username'], onIncompletePaymentFound);
+currentUser=auth.user;
+show("Welcome "+currentUser.username);
+}catch(e){
+show("Login failed");
+}
 }
 
-function render(user){
-
- app.innerHTML = `
- <h2 class="ok">Welcome ${user.user.username} 🚀</h2>
- <p>Galaxy access granted</p>
-
- <button id="payBtn" onclick="buyBoost()">
- Buy Boost (1 Pi)
- </button>
-
- <div class="small">
- UID: ${user.user.uid}
- </div>
-
- <div class="small" id="status"></div>
- `;
-
+function reward(){
+show("🎁 Reward claimed!");
 }
 
-function buyBoost(){
-
- const btn = document.getElementById("payBtn");
- const status = document.getElementById("status");
-
- btn.disabled = true;
- btn.innerText = "Processing...";
- status.innerText = "Opening Pi Payment...";
-
- try{
-
- Pi.createPayment({
-   amount:1,
-   memo:"Galaxy Boost",
-   metadata:{ item:"boost" }
-
- },{
-
-   onReadyForServerApproval:function(paymentId){
-     status.innerText = "Waiting approval...";
-     console.log(paymentId);
-   },
-
-   onReadyForServerCompletion:function(paymentId,txid){
-     status.innerText = "Completing payment...";
-   },
-
-   onCancel:function(paymentId){
-     status.innerText = "Payment cancelled";
-     btn.disabled = false;
-     btn.innerText = "Buy Boost (1 Pi)";
-   },
-
-   onError:function(error,payment){
-     console.log(error);
-     status.innerText = "Payment error ❌";
-     btn.disabled = false;
-     btn.innerText = "Buy Boost (1 Pi)";
-   },
-
-   onComplete:function(payment,txid){
-     status.innerText = "Boost Activated 🚀";
-     btn.innerText = "Purchased ✅";
-   }
-
- });
-
- }catch(err){
-
- status.innerText = "Cannot open payment";
- btn.disabled = false;
- btn.innerText = "Buy Boost (1 Pi)";
-
- }
-
+function onIncompletePaymentFound(payment){
+console.log(payment);
 }
 
-window.onload = function(){
+async function premium(){
+try{
+const payment = await Pi.createPayment({
+amount:0.01,
+memo:"Premium Access",
+metadata:{type:"premium"}
+},{
+onReadyForServerApproval:function(paymentId){
+show("⏳ Waiting approval...");
+},
 
- const user = getUser();
+onReadyForServerCompletion:function(paymentId,txid){
+show("✅ Premium unlocked!");
+},
 
- if(user){
-   render(user);
- }else{
-   login();
- }
+onCancel:function(paymentId){
+show("❌ Payment cancelled");
+},
 
+onError:function(error,payment){
+show("⚠️ Payment failed");
+}
+});
+
+}catch(e){
+show("Payment error");
+}
 }
 </script>
 
