@@ -1,117 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GameSpace Galaxy V2</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GameSpace Galaxy</title>
+
+<style>
+body{
+  margin:0;
+  padding:0;
+  background:#050816;
+  color:white;
+  font-family:Arial, sans-serif;
+  text-align:center;
+}
+
+.wrap{
+  padding:40px 20px;
+}
+
+.logo{
+  font-size:42px;
+  margin-top:30px;
+}
+
+h1{
+  margin:10px 0;
+  font-size:32px;
+}
+
+p{
+  opacity:.8;
+}
+
+.card{
+  background:#11182c;
+  margin:25px auto;
+  padding:20px;
+  border-radius:18px;
+  max-width:420px;
+}
+
+button{
+  background:#6c5ce7;
+  color:white;
+  border:none;
+  padding:14px 22px;
+  border-radius:12px;
+  font-size:16px;
+  margin-top:12px;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+.small{
+  font-size:13px;
+  opacity:.7;
+  margin-top:12px;
+}
+
+.success{
+  color:#00e676;
+}
+
+.error{
+  color:#ff5252;
+}
+</style>
 </head>
 
 <body>
-  <h1>🌌 Galaxy Loading...</h1>
-  <div id="app"></div>
+<div class="wrap">
+  <div class="logo">🌌</div>
+  <h1>GameSpace Galaxy</h1>
+  <p>Pi Web3 Gaming Platform</p>
 
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <div class="card" id="app">
+    Loading...
+  </div>
+</div>
 
-  <script>
-    Pi.init({
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+<script>
+const app = document.getElementById("app");
+
+// ========================
+// PI INIT
+// ========================
+Pi.init({
   version: "2.0",
   sandbox: false
 });
 
-    function getUser() {
-      try {
-        return JSON.parse(localStorage.getItem("pi_user"));
-      } catch {
-        return null;
-      }
+// ========================
+// PAYMENT CALLBACK
+// ========================
+function onIncompletePaymentFound(payment) {
+  console.log("Incomplete Payment:", payment);
+}
+
+// ========================
+// SAVE USER
+// ========================
+function saveUser(data){
+  localStorage.setItem("pi_user", JSON.stringify(data));
+}
+
+function getUser(){
+  try{
+    return JSON.parse(localStorage.getItem("pi_user"));
+  }catch(e){
+    return null;
+  }
+}
+
+// ========================
+// LOGIN
+// ========================
+async function loginPi(){
+
+  app.innerHTML = `
+    <h2>Connecting to Pi...</h2>
+    <p class="small">Please wait</p>
+  `;
+
+  try{
+
+    const auth = await Pi.authenticate(
+      ["username"],
+      onIncompletePaymentFound
+    );
+
+    saveUser(auth);
+
+    app.innerHTML = `
+      <h2 class="success">Welcome ${auth.user.username} 🚀</h2>
+      <p>Galaxy access granted</p>
+
+      <button onclick="buyBoost()">
+        Buy Boost (1 Pi)
+      </button>
+
+      <div class="small">
+        UID: ${auth.user.uid}
+      </div>
+    `;
+
+  }catch(err){
+
+    console.log(err);
+
+    app.innerHTML = `
+      <h2 class="error">Login Failed ❌</h2>
+      <p class="small">Try opening from Pi Browser</p>
+
+      <button onclick="loginPi()">
+        Retry Login
+      </button>
+    `;
+  }
+}
+
+// ========================
+// PAYMENT
+// ========================
+function buyBoost(){
+
+  const user = getUser();
+
+  if(!user){
+    loginPi();
+    return;
+  }
+
+  Pi.createPayment({
+    amount: 1,
+    memo: "Galaxy Boost",
+    metadata: { item:"boost" }
+
+  },{
+
+    onReadyForServerApproval: function(paymentId){
+      console.log("Approve:", paymentId);
+    },
+
+    onReadyForServerCompletion: function(paymentId, txid){
+      console.log("Complete:", paymentId, txid);
+    },
+
+    onCancel: function(paymentId){
+      alert("Payment cancelled");
+    },
+
+    onError: function(error, payment){
+      console.log(error);
+      alert("Payment error");
+    },
+
+    onComplete: function(payment, txid){
+      alert("Boost Activated 🚀");
     }
 
-    function saveUser(user) {
-      localStorage.setItem("pi_user", JSON.stringify(user));
-    }
+  });
+}
 
-    let authInProgress = false;
+// ========================
+// AUTO START
+// ========================
+window.onload = function(){
 
-    async function login() {
-      if (authInProgress) return;
-      authInProgress = true;
+  const user = getUser();
 
-      try {
-        const auth = await Pi.authenticate(['username']);
+  if(user && user.user){
+    app.innerHTML = `
+      <h2 class="success">Welcome Back ${user.user.username} 🚀</h2>
 
-        saveUser(auth);
+      <button onclick="buyBoost()">
+        Buy Boost (1 Pi)
+      </button>
 
-        // 🔗 backend sync (IMPORTANT FIX)
-        await fetch("https://YOUR-BACKEND.onrender.com/user/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            piUserId: auth.user.uid,
-            username: auth.user.username
-          })
-        });
-
-        return auth;
-
-      } catch (e) {
-        console.log("Login error:", e);
-      } finally {
-        authInProgress = false;
-      }
-    }
-
-    async function start() {
-      const app = document.getElementById("app");
-
-      let user = getUser();
-
-      if (!user) {
-        app.innerHTML = "<h2>Logging in with Pi...</h2>";
-        user = await login();
-      }
-
-      if (user) {
-        app.innerHTML = `
-          <h2>Welcome ${user.user.username} 🚀</h2>
-          <button onclick="buyBoost()">Buy Boost (1 Pi)</button>
-        `;
-      } else {
-        app.innerHTML = "<h2>Login failed ❌</h2>";
-      }
-    }
-
-    function buyBoost() {
-      const user = getUser();
-
-      Pi.createPayment({
-        amount: 1,
-        memo: "Galaxy Boost",
-        metadata: { item: "boost" }
-      }, {
-        onReadyForServerApproval: function(paymentId) {
-
-          fetch("https://YOUR-BACKEND.onrender.com/pay/approve", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              paymentId,
-              piUserId: user.user.uid,
-              item: "boost"
-            })
-          });
-
-        },
-
-        onComplete: function() {
-          alert("Payment successful 🚀");
-        },
-
-        onError: function(err) {
-          console.log("Payment error:", err);
-        }
-      });
-    }
-
-    start();
-  </script>
+      <div class="small">
+        Saved Session
+      </div>
+    `;
+  }else{
+    loginPi();
+  }
+};
+</script>
 
 </body>
 </html>
