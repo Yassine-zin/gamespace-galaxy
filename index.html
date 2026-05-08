@@ -2,50 +2,104 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>GameSpace Galaxy</title>
 
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <style>
-body{
+*{
 margin:0;
-font-family:Arial;
-background:#08142d;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+background:linear-gradient(180deg,#050816,#08142f,#0b1d47);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
 color:white;
-text-align:center;
-padding:30px;
 }
+
 .card{
-background:#15233f;
-padding:25px;
-border-radius:20px;
-max-width:420px;
-margin:auto;
-box-shadow:0 0 25px rgba(0,0,0,.4);
+width:100%;
+max-width:430px;
+background:rgba(255,255,255,0.06);
+backdrop-filter:blur(12px);
+border-radius:24px;
+padding:28px;
+box-shadow:0 0 30px rgba(0,0,0,.35);
 }
-h1{font-size:50px;margin-bottom:10px}
-p{opacity:.8}
+
+.logo{
+font-size:42px;
+text-align:center;
+margin-bottom:10px;
+}
+
+h1{
+text-align:center;
+font-size:34px;
+margin-bottom:8px;
+}
+
+.sub{
+text-align:center;
+opacity:.85;
+margin-bottom:25px;
+font-size:17px;
+}
+
+.profile{
+background:rgba(255,255,255,.07);
+padding:18px;
+border-radius:18px;
+margin-bottom:22px;
+line-height:1.9;
+font-size:17px;
+}
+
 button{
 width:100%;
-padding:20px;
-font-size:28px;
 border:none;
+padding:18px;
 border-radius:18px;
-margin:12px 0;
-color:white;
+font-size:20px;
 font-weight:bold;
+color:white;
+margin-bottom:14px;
 cursor:pointer;
+transition:.25s;
 }
-.blue{background:#2463ff}
-.green{background:#17b44a}
-.purple{background:#9c31ff}
+
+button:active{
+transform:scale(.97);
+}
+
+.login{background:#2d6bff;}
+.reward{background:#16b84e;}
+.premium{background:#9137ff;}
+.mission{background:#ff8a00;}
+
 .status{
-margin-top:15px;
-padding:20px;
-background:#2d3e59;
-border-radius:15px;
-font-size:28px;
+margin-top:10px;
+background:rgba(255,255,255,.07);
+padding:16px;
+border-radius:16px;
+text-align:center;
+font-size:17px;
+min-height:56px;
+}
+
+.small{
+font-size:14px;
+opacity:.75;
+text-align:center;
+margin-top:8px;
 }
 </style>
 </head>
@@ -53,43 +107,132 @@ font-size:28px;
 <body>
 
 <div class="card">
-<h1>🚀 GameSpace Galaxy</h1>
-<p>Play • Earn • Rule the Pi Universe</p>
 
-<button class="blue" onclick="loginPi()">🔐 Login with Pi</button>
-<button class="green" onclick="reward()">🎁 Claim Reward</button>
-<button class="purple" onclick="premium()">💎 Premium Access</button>
+<div class="logo">🚀</div>
 
-<div class="status" id="status">Ready...</div>
+<h1>GameSpace Galaxy</h1>
+<div class="sub">Play • Earn • Rule the Pi Universe</div>
+
+<div class="profile">
+👤 <span id="username">Guest Mode</span><br>
+🏆 Rank: <span id="rank">Rookie</span><br>
+⭐ XP: <span id="xp">0</span><br>
+🪙 Reward: <span id="coins">0</span> π
+</div>
+
+<button class="login" onclick="loginPi()">🔐 Login with Pi</button>
+
+<button class="reward" onclick="claimReward()">🎁 Claim Daily Reward</button>
+
+<button class="mission" onclick="mission()">⚔️ Start Mission</button>
+
+<button class="premium" onclick="premium()">💎 Premium Access</button>
+
+<div class="status" id="status">Welcome Commander</div>
+
+<div class="small">Powered by Pi Network</div>
+
 </div>
 
 <script>
-Pi.init({ version: "2.0", sandbox: true });
+let currentUser = "Guest Mode";
+let xp = 0;
+let coins = 0;
+
+function updateUI(){
+document.getElementById("username").innerText=currentUser;
+document.getElementById("xp").innerText=xp;
+document.getElementById("coins").innerText=coins.toFixed(2);
+
+if(xp>=500){
+document.getElementById("rank").innerText="Legend";
+}else if(xp>=250){
+document.getElementById("rank").innerText="Elite";
+}else if(xp>=100){
+document.getElementById("rank").innerText="Warrior";
+}else{
+document.getElementById("rank").innerText="Rookie";
+}
+}
 
 async function loginPi(){
+
 try{
-const scopes = ['username','payments'];
 
-const auth = await Pi.authenticate(scopes, function(payment){});
+Pi.init({ version:"2.0", sandbox:true });
 
-document.getElementById("status").innerHTML =
-"✅ Welcome " + auth.user.username;
+const scopes=['username','payments'];
+
+function onIncompletePaymentFound(payment){
+console.log(payment);
+}
+
+const auth = await Pi.authenticate(scopes,onIncompletePaymentFound);
+
+currentUser = auth.user.username;
+
+document.getElementById("status").innerText="Welcome "+currentUser;
+
+updateUI();
 
 }catch(e){
-document.getElementById("status").innerHTML =
-"❌ Login failed";
+document.getElementById("status").innerText="Login failed";
 }
 }
 
-function reward(){
-document.getElementById("status").innerHTML =
-"🎁 Reward claimed!";
+function claimReward(){
+
+coins += 0.01;
+xp += 10;
+
+document.getElementById("status").innerText="Reward Claimed +0.01 π";
+
+updateUI();
 }
 
-function premium(){
-document.getElementById("status").innerHTML =
-"💎 Premium coming soon!";
+function mission(){
+
+xp += 25;
+
+document.getElementById("status").innerText="Mission Complete +25 XP";
+
+updateUI();
 }
+
+async function premium(){
+
+try{
+
+const paymentData = {
+amount: 0.10,
+memo: "Premium Access",
+metadata: { type:"premium" }
+};
+
+const payment = await Pi.createPayment(
+paymentData,
+
+function(paymentId){
+document.getElementById("status").innerText="Payment Ready...";
+},
+
+function(txid){
+document.getElementById("status").innerText="Premium Activated!";
+xp += 100;
+updateUI();
+},
+
+function(error){
+document.getElementById("status").innerText="Payment Cancelled";
+}
+);
+
+}catch(err){
+document.getElementById("status").innerText="Premium Error";
+}
+}
+
+updateUI();
 </script>
 
 </body>
