@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,40 +11,41 @@
 body{
 margin:0;
 font-family:Arial;
-background:#0f172a;
+background:#08142d;
 color:white;
 text-align:center;
-padding:20px;
+padding:30px;
 }
 .card{
-max-width:420px;
-margin:auto;
-background:#1e293b;
+background:#15233f;
 padding:25px;
 border-radius:20px;
-box-shadow:0 0 20px rgba(0,0,0,.4);
+max-width:420px;
+margin:auto;
+box-shadow:0 0 25px rgba(0,0,0,.4);
 }
-h1{font-size:32px;margin-bottom:5px;}
-p{color:#cbd5e1;}
+h1{font-size:50px;margin-bottom:10px}
+p{opacity:.8}
 button{
 width:100%;
-padding:15px;
-margin-top:12px;
+padding:20px;
+font-size:28px;
 border:none;
-border-radius:14px;
-font-size:16px;
-font-weight:bold;
+border-radius:18px;
+margin:12px 0;
 color:white;
+font-weight:bold;
 cursor:pointer;
 }
-.login{background:#2563eb;}
-.reward{background:#16a34a;}
-.premium{background:#9333ea;}
-.notice{
+.blue{background:#2463ff}
+.green{background:#17b44a}
+.purple{background:#9c31ff}
+.status{
 margin-top:15px;
-padding:12px;
-border-radius:12px;
-background:#334155;
+padding:20px;
+background:#2d3e59;
+border-radius:15px;
+font-size:28px;
 }
 </style>
 </head>
@@ -52,71 +53,42 @@ background:#334155;
 <body>
 
 <div class="card">
-
 <h1>🚀 GameSpace Galaxy</h1>
 <p>Play • Earn • Rule the Pi Universe</p>
 
-<button class="login" onclick="login()">🔐 Login with Pi</button>
-<button class="reward" onclick="reward()">🎁 Claim Reward</button>
-<button class="premium" onclick="premium()">💎 Premium Access</button>
+<button class="blue" onclick="loginPi()">🔐 Login with Pi</button>
+<button class="green" onclick="reward()">🎁 Claim Reward</button>
+<button class="purple" onclick="premium()">💎 Premium Access</button>
 
-<div class="notice" id="msg">Ready</div>
-
+<div class="status" id="status">Ready...</div>
 </div>
 
 <script>
-let currentUser=null;
+Pi.init({ version: "2.0", sandbox: true });
 
-function show(t){
-document.getElementById("msg").innerText=t;
-}
-
-async function login(){
+async function loginPi(){
 try{
-Pi.init({version:"2.0",sandbox:true});
-const auth = await Pi.authenticate(['username'], onIncompletePaymentFound);
-currentUser=auth.user;
-show("Welcome "+currentUser.username);
+const scopes = ['username','payments'];
+
+const auth = await Pi.authenticate(scopes, function(payment){});
+
+document.getElementById("status").innerHTML =
+"✅ Welcome " + auth.user.username;
+
 }catch(e){
-show("Login failed");
+document.getElementById("status").innerHTML =
+"❌ Login failed";
 }
 }
 
 function reward(){
-show("🎁 Reward claimed!");
+document.getElementById("status").innerHTML =
+"🎁 Reward claimed!";
 }
 
-function onIncompletePaymentFound(payment){
-console.log(payment);
-}
-
-async function premium(){
-try{
-const payment = await Pi.createPayment({
-amount:0.01,
-memo:"Premium Access",
-metadata:{type:"premium"}
-},{
-onReadyForServerApproval:function(paymentId){
-show("⏳ Waiting approval...");
-},
-
-onReadyForServerCompletion:function(paymentId,txid){
-show("✅ Premium unlocked!");
-},
-
-onCancel:function(paymentId){
-show("❌ Payment cancelled");
-},
-
-onError:function(error,payment){
-show("⚠️ Payment failed");
-}
-});
-
-}catch(e){
-show("Payment error");
-}
+function premium(){
+document.getElementById("status").innerHTML =
+"💎 Premium coming soon!";
 }
 </script>
 
