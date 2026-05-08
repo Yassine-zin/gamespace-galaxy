@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>GameSpace Galaxy</title>
 
+<!-- Pi SDK -->
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <style>
@@ -21,58 +22,61 @@ min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-padding:20px;
+padding:18px;
 color:white;
 }
 
-.card{
+.wrapper{
 width:100%;
 max-width:430px;
-background:rgba(255,255,255,0.06);
-backdrop-filter:blur(12px);
+}
+
+.card{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(14px);
 border-radius:24px;
-padding:28px;
+padding:26px;
 box-shadow:0 0 30px rgba(0,0,0,.35);
 }
 
 .logo{
-font-size:42px;
+font-size:44px;
 text-align:center;
-margin-bottom:10px;
+margin-bottom:8px;
 }
 
 h1{
 text-align:center;
-font-size:34px;
-margin-bottom:8px;
+font-size:32px;
+margin-bottom:6px;
 }
 
 .sub{
 text-align:center;
 opacity:.85;
-margin-bottom:25px;
-font-size:17px;
+margin-bottom:22px;
+font-size:16px;
 }
 
 .profile{
 background:rgba(255,255,255,.07);
-padding:18px;
+padding:16px;
 border-radius:18px;
-margin-bottom:22px;
 line-height:1.9;
-font-size:17px;
+font-size:16px;
+margin-bottom:18px;
 }
 
 button{
 width:100%;
 border:none;
-padding:18px;
+padding:16px;
 border-radius:18px;
-font-size:20px;
+font-size:18px;
 font-weight:bold;
 color:white;
-margin-bottom:14px;
 cursor:pointer;
+margin-bottom:12px;
 transition:.25s;
 }
 
@@ -80,157 +84,273 @@ button:active{
 transform:scale(.97);
 }
 
-.login{background:#2d6bff;}
-.reward{background:#16b84e;}
-.premium{background:#9137ff;}
-.mission{background:#ff8a00;}
+.login{background:#2563eb;}
+.reward{background:#16a34a;}
+.mission{background:#ea580c;}
+.premium{background:#9333ea;}
 
 .status{
-margin-top:10px;
+margin-top:8px;
 background:rgba(255,255,255,.07);
-padding:16px;
+padding:15px;
 border-radius:16px;
 text-align:center;
-font-size:17px;
-min-height:56px;
+font-size:16px;
+min-height:55px;
 }
 
 .small{
-font-size:14px;
-opacity:.75;
 text-align:center;
-margin-top:8px;
+font-size:13px;
+opacity:.75;
+margin-top:10px;
+}
+
+.vip{
+margin-top:14px;
+padding:12px;
+border-radius:16px;
+text-align:center;
+background:rgba(255,215,0,.12);
+display:none;
+font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
+<div class="wrapper">
+
 <div class="card">
 
 <div class="logo">🚀</div>
 
 <h1>GameSpace Galaxy</h1>
-<div class="sub">Play • Earn • Rule the Pi Universe</div>
+
+<div class="sub">
+Play • Earn • Rule the Pi Universe
+</div>
 
 <div class="profile">
 👤 <span id="username">Guest Mode</span><br>
 🏆 Rank: <span id="rank">Rookie</span><br>
 ⭐ XP: <span id="xp">0</span><br>
-🪙 Reward: <span id="coins">0</span> π
+🪙 Reward: <span id="coins">0.00</span> π
 </div>
 
-<button class="login" onclick="loginPi()">🔐 Login with Pi</button>
+<button class="login" onclick="loginPi()">
+🔐 Login with Pi
+</button>
 
-<button class="reward" onclick="claimReward()">🎁 Claim Daily Reward</button>
+<button class="reward" onclick="claimReward()">
+🎁 Claim Daily Reward
+</button>
 
-<button class="mission" onclick="mission()">⚔️ Start Mission</button>
+<button class="mission" onclick="startMission()">
+⚔️ Start Mission
+</button>
 
-<button class="premium" onclick="premium()">💎 Premium Access</button>
+<button class="premium" onclick="premiumAccess()">
+💎 Premium Access
+</button>
 
-<div class="status" id="status">Welcome Commander</div>
+<div class="status" id="status">
+Welcome Commander
+</div>
 
-<div class="small">Powered by Pi Network</div>
+<div class="vip" id="vipbox">
+👑 PREMIUM MEMBER ACTIVATED
+</div>
+
+<div class="small">
+Powered by Pi Network
+</div>
+
+</div>
 
 </div>
 
 <script>
-let currentUser = "Guest Mode";
-let xp = 0;
-let coins = 0;
+/* =========================
+   GAME DATA
+========================= */
+
+let currentUser = localStorage.getItem("gg_user") || "Guest Mode";
+let xp = parseInt(localStorage.getItem("gg_xp")) || 0;
+let coins = parseFloat(localStorage.getItem("gg_coins")) || 0;
+let premium = localStorage.getItem("gg_premium") || "false";
+
+/* =========================
+   SAVE
+========================= */
+
+function saveGame(){
+localStorage.setItem("gg_user", currentUser);
+localStorage.setItem("gg_xp", xp);
+localStorage.setItem("gg_coins", coins);
+localStorage.setItem("gg_premium", premium);
+}
+
+/* =========================
+   UI UPDATE
+========================= */
 
 function updateUI(){
-document.getElementById("username").innerText=currentUser;
-document.getElementById("xp").innerText=xp;
-document.getElementById("coins").innerText=coins.toFixed(2);
 
-if(xp>=500){
-document.getElementById("rank").innerText="Legend";
-}else if(xp>=250){
-document.getElementById("rank").innerText="Elite";
-}else if(xp>=100){
-document.getElementById("rank").innerText="Warrior";
+document.getElementById("username").innerText = currentUser;
+document.getElementById("xp").innerText = xp;
+document.getElementById("coins").innerText = coins.toFixed(2);
+
+let rank = "Rookie";
+
+if(xp >= 500){
+rank = "Legend";
+}else if(xp >= 250){
+rank = "Elite";
+}else if(xp >= 100){
+rank = "Warrior";
+}
+
+document.getElementById("rank").innerText = rank;
+
+if(premium === "true"){
+document.getElementById("vipbox").style.display="block";
 }else{
-document.getElementById("rank").innerText="Rookie";
+document.getElementById("vipbox").style.display="none";
 }
+
+saveGame();
 }
+
+/* =========================
+   LOGIN
+========================= */
 
 async function loginPi(){
 
 try{
 
-Pi.init({ version:"2.0", sandbox:true });
+Pi.init({
+version:"2.0",
+sandbox:false
+});
 
-const scopes=['username','payments'];
+const scopes = ['username','payments'];
 
 function onIncompletePaymentFound(payment){
 console.log(payment);
 }
 
-const auth = await Pi.authenticate(scopes,onIncompletePaymentFound);
+const auth = await Pi.authenticate(
+scopes,
+onIncompletePaymentFound
+);
 
 currentUser = auth.user.username;
 
-document.getElementById("status").innerText="Welcome "+currentUser;
+document.getElementById("status").innerText =
+"Welcome " + currentUser;
 
 updateUI();
 
 }catch(e){
-document.getElementById("status").innerText="Login failed";
+
+document.getElementById("status").innerText =
+"Login failed";
+
+console.log(e);
+
 }
+
 }
+
+/* =========================
+   DAILY REWARD
+========================= */
 
 function claimReward(){
 
 coins += 0.01;
 xp += 10;
 
-document.getElementById("status").innerText="Reward Claimed +0.01 π";
+document.getElementById("status").innerText =
+"Reward Claimed +0.01 π";
 
 updateUI();
 }
 
-function mission(){
+/* =========================
+   MISSION
+========================= */
+
+function startMission(){
 
 xp += 25;
 
-document.getElementById("status").innerText="Mission Complete +25 XP";
+document.getElementById("status").innerText =
+"Mission Complete +25 XP";
 
 updateUI();
 }
 
-async function premium(){
+/* =========================
+   PREMIUM
+========================= */
+
+async function premiumAccess(){
 
 try{
 
-const paymentData = {
-amount: 0.10,
-memo: "Premium Access",
-metadata: { type:"premium" }
-};
-
-const payment = await Pi.createPayment(
-paymentData,
-
-function(paymentId){
-document.getElementById("status").innerText="Payment Ready...";
+await Pi.createPayment(
+{
+amount:0.10,
+memo:"Premium Access",
+metadata:{type:"premium"}
+},
+{
+onReadyForServerApproval:function(paymentId){
+document.getElementById("status").innerText =
+"Waiting approval...";
 },
 
-function(txid){
-document.getElementById("status").innerText="Premium Activated!";
+onReadyForServerCompletion:function(paymentId, txid){
+
+premium = "true";
 xp += 100;
+
+document.getElementById("status").innerText =
+"Premium Activated!";
+
 updateUI();
 },
 
-function(error){
-document.getElementById("status").innerText="Payment Cancelled";
+onCancel:function(paymentId){
+document.getElementById("status").innerText =
+"Payment Cancelled";
+},
+
+onError:function(error){
+document.getElementById("status").innerText =
+"Payment Error";
+}
 }
 );
 
 }catch(err){
-document.getElementById("status").innerText="Premium Error";
+
+document.getElementById("status").innerText =
+"Premium Error";
+
+console.log(err);
+
 }
+
 }
+
+/* =========================
+   AUTO LOAD
+========================= */
 
 updateUI();
 </script>
